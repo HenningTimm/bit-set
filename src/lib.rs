@@ -54,6 +54,9 @@
 #[cfg(all(test, feature = "nightly"))] extern crate rand;
 extern crate bit_vec;
 
+#[macro_use]
+extern crate serde_derive;
+
 #[cfg(test)]
 #[macro_use]
 extern crate std;
@@ -102,6 +105,7 @@ fn match_words<'a, 'b, B: BitBlock>(a: &'a BitVec<B>, b: &'b BitVec<B>)
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct BitSet<B = u32> {
     bit_vec: BitVec<B>,
 }
@@ -944,6 +948,8 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitSet<B> {
 
 #[cfg(test)]
 mod tests {
+    extern crate serde_json;
+    
     use std::cmp::Ordering::{Equal, Greater, Less};
     use super::BitSet;
     use bit_vec::BitVec;
@@ -1325,6 +1331,20 @@ mod tests {
         assert!(b.contains(1000));
     }
 
+
+    #[test]
+    fn test_serialization() {
+        let bit_set = BitSet::new();
+        let serialized = serde_json::to_string(&bit_set).unwrap();
+        let unserialized: BitSet = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(bit_set, unserialized);
+
+        let bit_set = BitSet::from_bytes(&[0b10100010]);
+        let serialized = serde_json::to_string(&bit_set).unwrap();
+        let unserialized = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(bit_set, unserialized);
+    }
+    
 /*
     #[test]
     fn test_bit_set_append() {
